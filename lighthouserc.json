@@ -1,0 +1,19 @@
+module.exports = {
+  ci: {
+    collect: {
+      url: ['http://localhost:3000/sweeper/', 'http://localhost:3000/sweeper/play'],
+      startServerCommand: 'npm run preview',
+      numberOfRuns: 1,
+    },
+    upload: {
+      target: 'temporary-public-storage',
+    },
+    assert: {
+      preset: 'lighthouse:recommended',
+      assertions: {
+        'categories:performance': ['error', { minScore: 0.9 }],
+        'categories:accessibility': ['error', { minScore: 0.95 }],
+      },
+    },
+  },
+};
