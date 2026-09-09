@@ -1,8 +1,6 @@
-# sweeper
+# [Sweeper](https://leo-curtis.github.io/sweeper/)
 
 A remake of one of my favorite games, built with React, TypeScript, and PWA.
-
-**[Play now](https://leo-curtis.github.io/sweeper/)** → https://leo-curtis.github.io/sweeper/
 
 ## Quickstart
 
