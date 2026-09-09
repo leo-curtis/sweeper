@@ -117,7 +117,7 @@ export function GamePage() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center gap-4 p-4 bg-gradient-to-b from-slate-100 to-slate-300 dark:from-zinc-900 dark:to-black">
+    <div className="w-full min-h-screen flex flex-col items-center justify-start gap-4 p-4 pt-8 bg-gradient-to-b from-slate-100 to-slate-300 dark:from-zinc-900 dark:to-black">
       {/* Toolbar: difficulty selector */}
       <div className="flex gap-1 items-center flex-wrap justify-center">
         <Button size="sm" variant={difficulty.difficulty === 'beginner' ? 'primary' : 'secondary'} onClick={() => handleDifficultyChange(BEGINNER)}>
