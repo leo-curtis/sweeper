@@ -2,11 +2,13 @@
   "name": "sweeper",
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@12.18.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "test:run": "vitest run",
     "lint": "eslint src tests --ext ts,tsx",
     "type-check": "tsc --noEmit"
   },
