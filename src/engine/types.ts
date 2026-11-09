@@ -22,6 +22,11 @@ export type Board = ReadonlyArray<ReadonlyArray<Cell>>;
 
 export type GameStatus = "idle" | "playing" | "won" | "lost";
 
+export interface Opening {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface Move {
   action: "open" | "flag" | "chord" | "restart";
   x?: number;
@@ -40,6 +45,7 @@ export interface GameSnapshot {
   readonly flaggedCount: number;
   readonly createdAt: number;
   readonly lastSequence?: number;
+  readonly opening?: Opening;
 }
 
 export interface GameEngine {

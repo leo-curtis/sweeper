@@ -16,6 +16,20 @@ describe("serialize", () => {
     expect(JSON.stringify(restored.getSnapshot())).toBe(JSON.stringify(game.getSnapshot()));
   });
 
+  it("round-trips a shared opening back into the identical board", () => {
+    const game = createGame({
+      seed: SEED,
+      settings: { difficulty: "beginner", width: 9, height: 9, mines: 10 },
+      createdAt: 0,
+      opening: { x: 4, y: 4 },
+    });
+    expect(JSON.parse(game.serialize()).opening).toEqual({ x: 4, y: 4 });
+
+    const restored = deserializeToEngine(game.serialize());
+    expect(restored.getSnapshot().opening).toEqual({ x: 4, y: 4 });
+    expect(JSON.stringify(restored.getSnapshot())).toBe(JSON.stringify(game.getSnapshot()));
+  });
+
   it("rejects payloads missing engineVersion, seed or settings", () => {
     expect(() => deserializeToEngine("{}")).toThrow("Invalid serialization");
   });

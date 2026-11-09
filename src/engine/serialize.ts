@@ -1,4 +1,4 @@
-import { GameSettings, Move } from "./types";
+import { GameSettings, Move, Opening } from "./types";
 
 export interface SerializedEngine {
   engineVersion: string;
@@ -6,6 +6,7 @@ export interface SerializedEngine {
   settings: GameSettings;
   createdAt: number;
   moves: Move[];
+  opening?: Opening;
 }
 
 export function serializeEngine(obj: SerializedEngine): string {

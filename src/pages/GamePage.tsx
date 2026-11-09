@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GameSettings, Seed, validateSeed } from '@engine';
+import { GameSettings, Opening, Seed, validateSeed } from '@engine';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import { useTheme } from '@/hooks/useTheme';
 import { Header } from '@/components/Header';
@@ -23,65 +23,109 @@ const DIFFICULTY_BY_NAME = {
   expert: EXPERT,
 } as const;
 
-// A shared link carries ?seed= + ?difficulty= so the exact board rebuilds.
-function getInitialGame(): { seed: Seed; difficulty: GameSettings } {
+interface GameConfig {
+  seed: Seed;
+  settings: GameSettings;
+  opening?: Opening;
+}
+
+// Shared links carry ?seed=, ?difficulty= and the opening cell (?x=, ?y=).
+// Re-applying the opening rebuilds the sharer's exact minefield.
+function parseOpening(params: URLSearchParams, settings: GameSettings): Opening | undefined {
+  const rawX = params.get('x');
+  const rawY = params.get('y');
+  if (rawX === null || rawY === null) return undefined;
+  const x = Number(rawX);
+  const y = Number(rawY);
+  if (!Number.isInteger(x) || !Number.isInteger(y)) return undefined;
+  if (x < 0 || y < 0 || x >= settings.width || y >= settings.height) return undefined;
+  return { x, y };
+}
+
+function getInitialGame(): GameConfig {
   try {
     const params = new URLSearchParams(window.location.search);
     const seedParam = params.get('seed');
     const diffParam = params.get('difficulty');
     if (seedParam) {
       validateSeed(seedParam);
-      const difficulty =
+      const settings =
         (diffParam && DIFFICULTY_BY_NAME[diffParam as keyof typeof DIFFICULTY_BY_NAME]) ||
         BEGINNER;
-      return { seed: seedParam as Seed, difficulty };
+      return {
+        seed: seedParam as Seed,
+        settings,
+        opening: parseOpening(params, settings),
+      };
     }
   } catch {
     // Non-browser environment or malformed URL — fall through to a fresh game.
   }
-  return { seed: generateSeed(), difficulty: BEGINNER };
+  return { seed: generateSeed(), settings: BEGINNER };
 }
 
-function shareUrlFor(seed: Seed, difficulty: GameSettings): string {
+function shareUrlFor(seed: Seed, settings: GameSettings, opening?: Opening): string {
   const url = new URL(window.location.href);
   url.searchParams.set('seed', seed);
-  url.searchParams.set('difficulty', difficulty.difficulty);
+  url.searchParams.set('difficulty', settings.difficulty);
+  if (opening) {
+    url.searchParams.set('x', String(opening.x));
+    url.searchParams.set('y', String(opening.y));
+  } else {
+    url.searchParams.delete('x');
+    url.searchParams.delete('y');
+  }
   return url.toString();
 }
 
 export function GamePage() {
-  const [initial] = useState(getInitialGame);
-  const [difficulty, setDifficulty] = useState<GameSettings>(initial.difficulty);
-  const [seed, setSeed] = useState<Seed>(initial.seed);
+  const [config, setConfig] = useState<GameConfig>(getInitialGame);
   const [timer, setTimer] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  const { snapshot, openCell, toggleFlag, chord, restart } = useGameEngine(seed, difficulty);
+  const { seed, settings: difficulty, opening: requestedOpening } = config;
+  const { snapshot, openCell, toggleFlag, chord } = useGameEngine(
+    seed,
+    difficulty,
+    requestedOpening
+  );
   const { theme, toggle } = useTheme();
 
-  const gameStatus = snapshot?.status;
+  const opening = snapshot?.opening;
+  const openingX = opening?.x;
+  const openingY = opening?.y;
+  const timerRunning = snapshot?.status === 'playing' && snapshot.movesCount > 0;
+
   useEffect(() => {
-    if (gameStatus !== 'playing') return;
+    if (!timerRunning) return;
 
     const interval = setInterval(() => {
       setTimer((t) => t + 1000);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [gameStatus]);
+  }, [timerRunning]);
 
-  // Reset timer on new game + keep the URL in sync so it stays shareable
+  // Reset the timer on a new game.
   useEffect(() => {
     setTimer(0);
+  }, [config]);
+
+  // Keep the URL in sync (including the opening cell) so it stays shareable.
+  useEffect(() => {
+    const openingForUrl =
+      openingX === undefined || openingY === undefined
+        ? undefined
+        : { x: openingX, y: openingY };
     try {
-      window.history.replaceState(null, '', shareUrlFor(seed, difficulty));
+      window.history.replaceState(null, '', shareUrlFor(seed, difficulty, openingForUrl));
     } catch {
       // History API unavailable — the share button still copies a valid link.
     }
-  }, [seed, difficulty]);
+  }, [seed, difficulty, openingX, openingY]);
 
   const handleShare = async () => {
-    const url = shareUrlFor(seed, difficulty);
+    const url = shareUrlFor(seed, difficulty, opening);
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Sweeper board', url });
@@ -101,15 +145,11 @@ export function GamePage() {
   };
 
   const handleRestart = () => {
-    setSeed(generateSeed());
-    setTimer(0);
-    restart();
+    setConfig({ seed: generateSeed(), settings: difficulty });
   };
 
   const handleDifficultyChange = (newDifficulty: GameSettings) => {
-    setDifficulty(newDifficulty);
-    setSeed(generateSeed());
-    setTimer(0);
+    setConfig({ seed: generateSeed(), settings: newDifficulty });
   };
 
   if (!snapshot) {
