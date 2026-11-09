@@ -6,10 +6,12 @@ import {
   Move,
   GameEngine,
   Cell,
+  Opening,
 } from "./types";
 import {
   createEmptyBoard,
   placeMines,
+  ensureSafeZone,
   floodFillReveal,
   MutableCell,
 } from "./generator";
@@ -47,19 +49,42 @@ export function createGame(params: {
   seed: Seed;
   settings: GameSettings;
   createdAt?: number;
+  opening?: Opening;
 }): GameEngine {
   validateSeed(params.seed);
   const engineVersion = "1.0";
   const createdAt = params.createdAt ?? Date.now();
 
+  function isInBounds(x: number, y: number) {
+    return (
+      Number.isInteger(x) &&
+      Number.isInteger(y) &&
+      x >= 0 &&
+      y >= 0 &&
+      x < params.settings.width &&
+      y < params.settings.height
+    );
+  }
+
+  // A shared board can name the cell its player opened first. Pre-applying it
+  // rebuilds that exact board (including any mines moved for first-click safety).
+  const requestedOpening: Opening | undefined =
+    params.opening && isInBounds(params.opening.x, params.opening.y)
+      ? { x: params.opening.x, y: params.opening.y }
+      : undefined;
+
   let seedState = seedToState(params.seed);
 
+  // Place the minefield up front so the seed alone defines the board. The
+  // first click's safe zone is carved out lazily by ensureSafeZone().
   let board: MutableCell[][] = createEmptyBoard(params.settings.width, params.settings.height);
-  let minesPlaced = false;
+  placeMines(board, params.settings, new Set(), seedState);
   let status: GameStatus = "idle";
   let moves: Move[] = [];
   let openedCount = 0;
   let flaggedCount = 0;
+  let safetyApplied = false;
+  let opening: Opening | undefined;
 
   function computeSnapshot(): GameSnapshot {
     const boardPublic = boardToPublic(board);
@@ -74,30 +99,9 @@ export function createGame(params: {
       flaggedCount,
       createdAt,
       lastSequence: moves.length ? moves[moves.length - 1]?.sequence : undefined,
+      opening: opening ? { ...opening } : undefined,
     });
     return snapshot;
-  }
-
-  function placeIfNeeded(excludeX: number, excludeY: number) {
-    if (minesPlaced) return;
-    const exclude = new Set<string>();
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const nx = excludeX + dx,
-          ny = excludeY + dy;
-        if (
-          nx >= 0 &&
-          ny >= 0 &&
-          nx < params.settings.width &&
-          ny < params.settings.height
-        ) {
-          exclude.add(`${nx},${ny}`);
-        }
-      }
-    }
-    placeMines(board, params.settings, exclude, seedState);
-    minesPlaced = true;
-    status = "playing";
   }
 
   function checkWin() {
@@ -127,7 +131,13 @@ export function createGame(params: {
     const cell = board[y]?.[x];
     if (!cell || cell.isOpen || cell.isFlagged) return [];
 
-    placeIfNeeded(x, y);
+    if (!safetyApplied) {
+      // First open: carve the 3x3 opening area out of the seed-placed minefield.
+      ensureSafeZone(board, params.settings, seedState, x, y);
+      safetyApplied = true;
+      opening = { x, y };
+    }
+    if (status === "idle") status = "playing";
 
     const changed: Array<{ x: number; y: number }> = [];
     if (cell.isMine) {
@@ -252,11 +262,14 @@ for (const [dx, dy] of NEIGHBORS) {
       case "restart": {
         board = createEmptyBoard(params.settings.width, params.settings.height);
         seedState = seedToState(params.seed);
-        minesPlaced = false;
+        placeMines(board, params.settings, new Set(), seedState);
         status = "idle";
         moves = [];
         openedCount = 0;
         flaggedCount = 0;
+        safetyApplied = false;
+        opening = undefined;
+        if (requestedOpening) openAt(requestedOpening.x, requestedOpening.y);
         break;
       }
       default:
@@ -296,8 +309,13 @@ for (const [dx, dy] of NEIGHBORS) {
       settings: params.settings,
       createdAt,
       moves,
+      opening,
     });
   }
+
+  // A shared board starts from the same opening cell its sharer used, so the
+  // minefield (including safety relocations) is reproduced exactly.
+  if (requestedOpening) openAt(requestedOpening.x, requestedOpening.y);
 
   return {
     dispatch,
@@ -317,6 +335,7 @@ export function deserializeToEngine(json: string) {
     seed: parsed.seed,
     settings: parsed.settings,
     createdAt: parsed.createdAt,
+    opening: parsed.opening,
   });
   // replay moves deterministically, respecting sequence
   for (const m of parsed.moves ?? []) {

@@ -5,13 +5,13 @@ A remake of one of my favorite games, built with React, TypeScript, and PWA.
 ## Quickstart
 
 ```bash
-npm install
-npm run dev      # http://localhost:5173/sweeper/
-npm run test     # vitest (watch) — use `npx vitest run` for a single pass
-npm run lint
-npm run type-check
-npm run build    # tsc + vite build → dist/
-npm run preview
+pnpm install
+pnpm dev         # http://localhost:5173/sweeper/
+pnpm test        # vitest (watch) — use `pnpm test:run` for a single pass
+pnpm lint
+pnpm type-check
+pnpm build       # tsc + vite build → dist/
+pnpm preview
 ```
 
 ## How to play
@@ -20,8 +20,10 @@ npm run preview
 - **Flag** a suspected mine: right-click, two-finger click, or long-press.
 - **Chord** (open everything around a solved number): double-click an open
   number once its flag count matches.
-- **Share a board**: 🔗 Share board copies a link carrying the board's
-  seed + difficulty, so the exact layout rebuilds for anyone opening it.
+- **Share a board**: 🔗 Share board copies a link carrying the board's seed,
+  difficulty and opening cell. The minefield is generated from the seed up
+  front, and the recipient starts from the same revealed opening, so they get
+  the exact same board.
 - **Theme**: 🌙 / ☀️ toggle, persisted, follows the OS on first visit.
 
 ## Tech notes
