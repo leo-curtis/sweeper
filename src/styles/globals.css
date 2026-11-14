@@ -57,14 +57,14 @@ select {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 2px solid #047857;
+  outline: 2px solid #7c3aed;
   outline-offset: 2px;
 }
 
 body.dark button:focus-visible,
 body.dark a:focus-visible,
 body.dark input:focus-visible {
-  outline-color: #34d399;
+  outline-color: #c4b5fd;
 }
 
 /* Utility classes */

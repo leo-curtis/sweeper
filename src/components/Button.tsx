@@ -15,7 +15,7 @@ export function Button({
   const baseStyles = 'font-medium transition-colors rounded-lg focus-visible:outline-offset-2';
 
   const variants = {
-    primary: 'bg-light-accent text-white hover:bg-emerald-800 dark:bg-dark-accent dark:text-zinc-900 dark:hover:bg-emerald-300',
+    primary: 'bg-light-accent text-white hover:bg-violet-700 dark:bg-dark-accent dark:text-zinc-900 dark:hover:bg-violet-200',
     secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 dark:bg-dark-surface dark:text-dark-text dark:hover:bg-gray-600',
     ghost: 'text-light-accent hover:bg-light-surface dark:text-dark-accent dark:hover:bg-dark-surface',
   };
