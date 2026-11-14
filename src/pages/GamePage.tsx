@@ -183,7 +183,7 @@ export function GamePage() {
 
       {snapshot.status === 'won' && (
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">You Won!</h2>
+          <h2 className="text-3xl font-bold text-violet-600 dark:text-violet-400 mb-2">You Won!</h2>
           <p className="text-lg text-gray-600 dark:text-gray-400">
             {snapshot.movesCount} moves in {Math.floor(timer / 1000)}s
           </p>

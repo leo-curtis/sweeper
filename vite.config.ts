@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'Sweeper',
         short_name: 'Sweeper',
         description: 'Sweeper, a mine-clearing puzzle web application',
-        theme_color: '#059669',
+        theme_color: '#7c3aed',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/sweeper/',

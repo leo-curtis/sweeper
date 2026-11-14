@@ -1,5 +1,5 @@
 // Run: node public/icons/create-icons.js
-// Dependency-free icon generator: classic mine on brand blue.
+// Dependency-free icon generator: classic mine on brand purple.
 // Writes icon-192.png and icon-512.png next to this script.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -53,9 +53,9 @@ function writePng(size, pixels) {
 function drawMine(size) {
   const px = Buffer.alloc(size * size * 3);
   for (let i = 0; i < size * size; i++) {
-    px[i * 3] = 5;
-    px[i * 3 + 1] = 150;
-    px[i * 3 + 2] = 105;
+    px[i * 3] = 124;
+    px[i * 3 + 1] = 58;
+    px[i * 3 + 2] = 237;
   }
   const set = (x, y, r, g, b) => {
     if (x < 0 || y < 0 || x >= size || y >= size) return;
